@@ -292,14 +292,12 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
                 (self.min_in, self.min_out))
 
     def get_inverse_transform(self, inputs=[], outputs=[]):
-        x = np.copy(inputs); y = []
+        x = np.copy(inputs); y = outputs
         if 'data_format' in self.config and self.config['data_format'] == 'vector3D':
             x = np.reshape(x, (-1, self.series_len, 6))
         if self.transform_type:
             if len(outputs) > 0 and 'data_format' in self.config and self.config['data_format'] == 'freq_image':
                 y = self.transform[1].inverse_transform(outputs)
-            elif len(outputs) > 0 and 'data_format' in self.config and self.config['data_format'] == 'freq_power':
-                y = outputs
             elif len(inputs) > 0:
                 for i, inp in enumerate(x):
                     x[i] = self.transform[0].inverse_transform(inp)

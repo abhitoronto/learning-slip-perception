@@ -474,7 +474,7 @@ class slip_detection_model:
     def __generate_classification_report(self, y, y_predict, exclude,
                                        title = "EMPTY TITLE"):
         if len(y) == 0 or len(y_predict) == 0:
-            eprint("Cannot generate classification results with empty arrrays")
+            eprint("Cannot generate classification results with empty arrays")
             return ""
 
         assert np.shape(y) == np.shape(y_predict)

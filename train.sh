@@ -29,7 +29,15 @@ test_net ()  {
     REPLACE_STR="balance_data: false"
     sed -i "s/${SEARCH_STR}/${REPLACE_STR}/" $1
 
+    # SEARCH_STR="train_data_exclude: \[foam, release\]"
+    # REPLACE_STR="train_data_exclude: \[foam, release, plastic, horizontal, vertical\]"
+    # sed -i "s/${SEARCH_STR}/${REPLACE_STR}/" $1
+
     train_epochs 0 $1
+
+    # SEARCH_STR="train_data_exclude: \[foam, release, plastic, horizontal, vertical\]"
+    # REPLACE_STR="train_data_exclude: \[foam, release\]"
+    # sed -i "s/${SEARCH_STR}/${REPLACE_STR}/" $1
 
     SEARCH_STR="balance_data: false"
     REPLACE_STR="balance_data: true"
@@ -262,7 +270,9 @@ test_net_time_series () {
 # test_net ./logs/models/TCN_20210210-011925/config.yaml # plastic + sphere + cylinder(both) - rotation + static + data balancing (changed labelling)
 # test_net ./logs/models/TCN_20210210-012516/config.yaml # plastic + sphere + cylinder(both) + rotation (changed labelling)
 
-test_net ./logs/models/TCN_20210210-011650/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling)
+#####################
+###test_net ./logs/models/TCN_20210210-011650/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling)
+#####################
 # test_net ./logs/models/FREQ_20210212-011047/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) (100)
 
 # train_epochs 400 ./logs/models/TCN_20210213-215125/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling)
@@ -273,3 +283,16 @@ test_net ./logs/models/TCN_20210210-011650/config.yaml # plastic + sphere + cyli
 ## Direction
 # test_net ./logs/models/TCN_20210107-123615/config.yaml # Translation only
 # test_net ./logs/models/TCN_20210203-005213/config.yaml # plastic + sphere + cylinder(both) - rotation - release
+
+
+## SERIES LENGTH EXPERIMENTS
+train_epochs 400 ./logs/models/TCN_20210811-112101/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 10
+train_epochs 400 ./logs/models/TCN_20210811-140737/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 20
+train_epochs 400 ./logs/models/TCN_20210811-140914/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 30
+train_epochs 400 ./logs/models/TCN_20210811-145506/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 40
+train_epochs 400 ./logs/models/TCN_20210811-112457/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 50
+train_epochs 400 ./logs/models/TCN_20210811-145631/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 60
+train_epochs 400 ./logs/models/TCN_20210811-145803/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 70
+train_epochs 400 ./logs/models/TCN_20210811-154953/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 80
+train_epochs 400 ./logs/models/TCN_20210811-155129/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 90
+train_epochs 400 ./logs/models/TCN_20210811-155317/config.yaml # plastic + sphere + cylinder(both) + rotation + static + data balancing (changed labelling) 100
