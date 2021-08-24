@@ -18,13 +18,13 @@ prediction_freq = data.predictions(:,2);
 % Plot
 figure;
 plot(time, slip, 'Color', [0.3 0.3 0.3],'LineWidth',2.0); hold on;
-plot(time, prediction_TCN, 'red','LineWidth',1.0);
-plot(time, prediction_freq, 'blue','LineWidth',1.0);
-plot(time([1,end]), 0.5*ones(2), 'black')
+plot(time, prediction_TCN, 'red','LineWidth',2.0);
+plot(time, prediction_freq, 'blue','LineWidth',2.0);
+plot(time([1,end]), 0.5*ones(2), '--', 'Color' ,'black');
 ylabel('Probability of Slip');
 ylim([-0.1, 1.1]);
 xlim([0.5, 3.85])
-legend("Label", "TCN Prediction", "Freq CNN Prediction");
+legend("True Label", "TCN Prediction", "Freq CNN Prediction", "Classification threshold");
 
 xlabel("Time [s]");
 

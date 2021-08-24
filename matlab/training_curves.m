@@ -25,9 +25,10 @@ yyaxis left;
 xlabel('Epochs');
 ylabel('Accuracy');
 ylim([0.8, 0.93]);
+grid on;
 
 yyaxis right;
-plot(epochs, data_val_loss, 'LineWidth', 1.5); hold off;
+plot(epochs, data_val_loss, 'r', 'LineWidth', 1.5); hold off;
 ylabel('Loss');
 ylim([0.15, 0.4]);
 
