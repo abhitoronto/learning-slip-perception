@@ -39,7 +39,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, \
                             accuracy_score, precision_recall_curve, roc_curve
 from sklearn.metrics.pairwise import cosine_similarity
 
-from nets import compiled_tcn, compiled_tcn_3D, tcn_full_summary, freq_model
+from nets import compiled_tcn, compiled_tcn_3D, tcn_full_summary, freq_model, LSTM_model
 
 # Get log directory
 CWD = os.path.dirname(os.path.realpath(__file__))
@@ -71,12 +71,19 @@ class slip_detection_model:
             self.log_scalers = self.training_config['log_scaler_dir']
             self.log_best_model = self.network_config['best_model_path'] if 'best_model_path' in self.network_config else self.log_models_dir
             if self.network_config['use_best_model'] == True:
-                self.__model = keras.models.load_model(self.log_best_model)
+                best_model = self.log_best_model
+                if self.network_config['type'] == 'lstm':
+                    best_model += '/saved_model.h5'
+                self.__model = keras.models.load_model(best_model)
             else:
-                self.__model = keras.models.load_model(self.log_models_dir)
+                saved_model = self.log_models_dir
+                if self.network_config['type'] == 'lstm':
+                    saved_model += '/saved_model.h5'
+                self.__model = keras.models.load_model(saved_model)
             if self.network_config['type'] == 'tcn': tcn_full_summary(self.__model, expand_residual_blocks=True)
             elif self.network_config['type'] == 'tcn3D': tcn_full_summary(self.__model, expand_residual_blocks=True)
             elif self.network_config['type'] == 'freq_net': self.__model.summary()
+            elif self.network_config['type'] == 'lstm': self.__model.summary()
             else: raise ValueError("Model type not supported: {}".format(self.network_config['type']))
         elif self.network_config['type'] != 'freq_thresh':
             if self.network_config['type'] == 'tcn':
@@ -138,6 +145,19 @@ class slip_detection_model:
                                     activation = self.network_config['activation'])
                 self.log_models_dir = logdir + "/models/" + "FREQ_" +  datetime.now().strftime("%Y%m%d-%H%M%S")
                 self.__model.summary()
+            elif self.network_config['type'] == 'lstm':
+                output_layers = self.network_config['output_layers'][:]
+                self.__model = LSTM_model(input_shape=(self.data_config['series_len'], num_features),
+                                            num_classes=num_classes,
+                                            lstm_outputs_num=self.network_config['nb_filters'],
+                                            dense_layer_num=output_layers,
+                                            layer_norm=self.training_config['use_layer_norm'],
+                                            dropout_rate=self.training_config['dropout_rate'],
+                                            kernel_initializer=self.training_config['kernel_initializer'],
+                                            lr=self.training_config['lr'],
+                                            activation = self.network_config['activation'])
+                self.log_models_dir = logdir + "/models/" + "LSTM_" +  datetime.now().strftime("%Y%m%d-%H%M%S")
+                self.__model.summary()
             else:
                 raise ValueError("Model type not supported: {}".format(self.network_config['type']))
             # Create logging locations
@@ -172,8 +192,11 @@ class slip_detection_model:
                 best_metric = 'val_categorical_accuracy'
                 mode = 'max'
                 min_delta = 0.0001
+            best_model = self.log_best_model
+            if self.network_config['type'] == 'lstm':
+                best_model += '/saved_model.h5'
             model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
-                                                            filepath=self.log_best_model,
+                                                            filepath=best_model,
                                                             save_weights_only=False,
                                                             monitor=best_metric,
                                                             mode=mode,
@@ -236,9 +259,12 @@ class slip_detection_model:
 
     def save_model(self):
         # Save Model
+        filepath_ = self.log_models_dir
+        if self.network_config['type'] == 'lstm':
+            filepath_ += '/saved_model.h5'
         self.network_config['model_dir'] = self.log_models_dir
         if self.network_config['save_last_model'] == True:
-            self.__model.save(filepath=self.log_models_dir,
+            self.__model.save(filepath=filepath_,
                         overwrite=True,
                         include_optimizer=True)
         else: # Ask to save the model and wait 30s
@@ -247,7 +273,7 @@ class slip_detection_model:
             i, o, e = select.select( [sys.stdin], [], [], 30)
             if (i):
                 if sys.stdin.readline().strip() == 'y':
-                    self.__model.save(filepath=self.log_models_dir,
+                    self.__model.save(filepath=filepath_,
                             overwrite=True,
                             include_optimizer=True)
                 else:

@@ -10,7 +10,7 @@ data:
     eval_data: False # Whether or not to create eval data
     train_dir: /train/
     test_dir: /val/
-    label_dimension: translation # x | y | rotation | translation | all
+    label_dimension: all # x | y | rotation | translation | all
     label_type: slip # slip | direction | value
     radial_slip: True # slip boundry is circular instead of a square
     materials: [plastic, horizontal, vertical, sphere]
@@ -40,17 +40,17 @@ data:
 # Network config
 net:
     trained: False
-    type: tcn
-    nb_filters: 12
+    type: lstm
+    nb_filters: [12,12,12,24]
     kernel_size: 8
-    dilations: [1, 2, 4, 8]
+    dilations: [0,0,0,0]
     nb_stacks: 1
     return_sequences: False
-    name: tcn_takktile
+    name: lstm_takktile
     output_layers: [24, 24] # The final layer size is added by code
     padding: causal
     use_skip_connections: False
-    activation: selu
+    activation: tanh
     use_best_model: False
     save_last_model: True
 
