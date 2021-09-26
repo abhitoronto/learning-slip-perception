@@ -179,6 +179,8 @@ class slip_detection_model:
         # Train Model
         if self.training_config['regression'] != True:
             print("Training data distribution: {}".format(datagen_train.get_class_nums()))
+            print("Training datapoints: {}".format(len(datagen_train)))
+            print("Validation datapoints: {}".format(len(val_data[1])))
         epochs = int(self.training_config['epochs'])
         if epochs - self.training_config['epochs_complete'] > 0:
             # Create Tensorboard callback
@@ -437,19 +439,19 @@ class slip_detection_model:
         assert len(y_true) == len(y_predict)
         precision, recall, thresh = precision_recall_curve(y_true, y_predict)
 
-        plot = plt.figure(figsize=(20, 20))
+        plot = plt.figure(figsize=(5.2, 5))
         plt.step(recall, precision, color='b', where='post')
         plt.plot([0,1],[0,1], color='r')
-        plt.title(name)
+        # plt.title(name)
+        plt.axis('equal')
+        # plt.grid(True)
         plt.xlabel("Recall")
         plt.ylabel("Precision")
-        plt.xlim((0.5, 1.0))
-        plt.ylim((0.5, 1.0))
-        plt.axis('equal')
-        plt.grid(True)
+        plt.xlim((0.7, 1.0))
+        plt.ylim((0.7, 1.0))
 
         for i,(x,y,z) in enumerate(zip(recall, precision, thresh)):
-            if i % (len(thresh)/int(40)) == 0:
+            if i % (len(thresh)/int(30)) == 0:
                 label = "{:.2f}".format(z)
                 plt.annotate(label, # this is the text
                             (x,y), # this is the point to label

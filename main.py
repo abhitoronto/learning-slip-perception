@@ -25,6 +25,7 @@ def eprint(*args, **kwargs):
 #####################
 import os
 import scipy.io as sio
+import copy
 
 from utils import takktile_datagenerator, \
                   load_yaml, \
@@ -33,7 +34,7 @@ from utils import takktile_datagenerator, \
                   slip_detection_model
 
 
-def create_train_val_datagen(config):
+def create_train_test_datagen(config):
     data_config = config['data']
     network_config = config['net']
     training_config = config['training']
@@ -49,43 +50,46 @@ def create_train_val_datagen(config):
     # Load data into datagen
     dir_list_train = [data_home + data_config['train_dir']]
     datagen_train.load_data_from_dir(dir_list=dir_list_train,
-                                     exclude=data_config['train_data_exclude'])
+                                     exclude=data_config['train_data_exclude'],
+                                     val_split = data_config['validation_split'] if 'validation_split' in data_config else 0.0)
 
     # Create datagenerator Val
-    datagen_val = takktile_datagenerator(config= data_config, augment=takktile_data_augment(None),
+    datagen_test = takktile_datagenerator(config= data_config, augment=takktile_data_augment(None),
                                          balance= training_config['balance_data'] if 'balance_data' in training_config else False)
 
     # Load data into datagen
-    dir_list_val = [data_home + data_config['test_dir']]
-    datagen_val.load_data_from_dir(dir_list=dir_list_val,
+    dir_list_test = [data_home + data_config['test_dir']]
+    datagen_test.load_data_from_dir(dir_list=dir_list_test,
                                    exclude=data_config['test_data_exclude'])
 
     # Load training tranformation
     if network_config['trained'] == True:
         datagen_train.load_data_attributes_from_config()
-        datagen_val.load_data_attributes_from_config()
+        datagen_test.load_data_attributes_from_config()
     else:
         datagen_train.load_data_attributes_to_config()
-        datagen_val.load_data_attributes_from_config()
+        datagen_test.load_data_attributes_from_config()
 
-    return datagen_train, datagen_val
+    return datagen_train, datagen_test
 
 
 def train_slip_detection(config):
 
     # Create Data Generators
-    datagen_train, datagen_val = create_train_val_datagen(config)
+    datagen_train, datagen_test = create_train_test_datagen(config)
 
-    val_data = datagen_val.get_all_batches()
+    # datagen_train.set_validation_mode(True)
+    val_data = datagen_train.get_all_batches()
+    # datagen_train.set_validation_mode(False)
 
     # Init Slip detection Network
-    sd = slip_detection_model(config)
+    sd = slip_detection_model(config=config, slip_thresh=0.5)
 
     # Train
     sd.train(datagen_train, val_data)
 
     # Generate Test Reports
-    sd.generate_and_save_test_report(datagen_val)
+    sd.generate_and_save_test_report(datagen_test)
 
     # Save Model
     sd.save_model()
@@ -95,12 +99,12 @@ def train_slip_detection(config):
     save_yaml(config, log_models_dir + "/config.yaml")
 
     # Delete all variables
-    del datagen_train, datagen_val
+    del datagen_train, datagen_test
 
 def train_slip_detection_freq_thresh(config):
 
     # Create Data Generators
-    datagen_train, datagen_val = create_train_val_datagen(config)
+    datagen_train, datagen_test = create_train_test_datagen(config)
 
     # Init Slip detection Network
     sd = slip_detection_model(config)
@@ -112,14 +116,14 @@ def train_slip_detection_freq_thresh(config):
     #     sd.generate_and_save_test_report(datagen_train, create_plots=False)
 
     # Generate Test Reports
-    sd.generate_and_save_test_report(datagen_val, create_plots=False)
+    sd.generate_and_save_test_report(datagen_test, create_plots=False)
 
     # Save config
     log_models_dir = sd.get_model_directory()
     save_yaml(config, log_models_dir + "/config.yaml")
 
     # Delete all variables
-    del datagen_train, datagen_val
+    del datagen_train, datagen_test
 
 def test_slip_detection_time_series(config):
     data_config = config['data']

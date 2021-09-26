@@ -142,11 +142,11 @@ class takktile_dataloader(object):
             Data Format: [pressure], ([slip_dir], [slip_speed])
         """
         if self.empty() or not isinstance(idx, (int, long)):
-            eprint("\t\t Incorrect index access: {}".format(idx))
+            eprint("\t\t Incorrect index access 1: {}".format(idx))
             return ()
 
         if idx<0 or idx>=self.size():
-            eprint("\t\t Incorrect index access: {}".format(idx))
+            eprint("\t\t Incorrect index access 2: {}".format(idx))
             return ()
 
         ret_list = range(idx-self.series_len+1, idx+1)
@@ -175,11 +175,11 @@ class takktile_dataloader(object):
             Data Format: slip_x, slip_y, rot
         """
         if self.empty() or not isinstance(idx, (int, long)):
-            eprint("\t\t Incorrect index access: {}".format(idx))
+            eprint("\t\t Incorrect index access 3: {}".format(idx))
             return ()
 
         if idx<0 or idx>=self.size():
-            eprint("\t\t Incorrect index access: {}".format(idx))
+            eprint("\t\t Incorrect index access 4: {}".format(idx))
             return ()
 
         if self.__get_mode() == FLOW_MODE:

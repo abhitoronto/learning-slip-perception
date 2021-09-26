@@ -80,14 +80,13 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
         self.num_dl = 0
         self.shuffle = config['shuffle']
         self.data_mode = config['slip_filter']
-        self.create_eval_data = config['eval_data']
-        self.eval_len = 0
         self.transform_type = config['data_transform']['type'] if 'data_transform' in config else None
         self.series_len = config['series_len']
         self.config = config
         self.augment = augment
         self.balance_data = balance
         self.oversampling = oversampling
+        self.val_split = 0.0
 
         if self.transform_type:
             assert self.transform_type == 'standard' or self.transform_type == 'minmax'
@@ -101,7 +100,8 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
 
     def load_data_from_dir(self,
                            dir_list=[],
-                           exclude=[]):
+                           exclude=[],
+                           val_split = 0.0):
         """
         Recursive function to load data.mat files in directories with
         signature *takktile_* into a dataloader.
@@ -114,6 +114,7 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
             list of keywords that dataloaders paths should not contain
         """
         dir_list_ = dir_list[:]
+        self.val_split = val_split
 
         if len(dir_list) == 0:
             eprint("CANNOT load data generator with an empty list of directories: {}".format(dir_list))
@@ -151,11 +152,6 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
         if self.transform_type:
             self.__calculate_data_transforms()
 
-        # Create Eval Data
-        if self.create_eval_data:
-            self.eval_len = (self.__len__())//10
-            self.create_eval_data = False
-
         # Calculate class number and ratios
         # Also calculate class diffs
         if not self.config['label_type'] == 'value':
@@ -170,7 +166,7 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
             self.__class_diff = [d if n > 0 else 0 for n,d in zip(self.__class_nums, self.__class_diff)]
 
         # Reset and prepare data
-        self.on_epoch_end()
+        self.__create_lists()
 
     def reset_data(self):
         if self.empty():
@@ -182,7 +178,7 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
         self.__class_ratios = None
         self.__class_diff = None
 
-    def on_epoch_end(self):
+    def __create_lists(self):
         """ Created iterable list from dataloaders
         """
         if self.empty():
@@ -191,27 +187,47 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
         self.dl_idx = range(len(self.dataloaders))
         self.dl_data_idx = []
         for idx in self.dl_idx:
-            # Extract data indices
-            data_idx_list = self.__get_data_idx(idx)
-            if self.shuffle: # Shuffle dataloader data list
-                np.random.shuffle(data_idx_list)
-            # Store Data indices
-            self.dl_data_idx.append(data_idx_list)
-
-        if self.shuffle: # Shuffle dataloader list
-            np.random.shuffle(self.dl_idx)
+            # Extract and store data indices
+            self.dl_data_idx.append(self.__get_data_idx(idx))
 
         if self.balance_data:
             self.__balance_generator_data()
 
-    def evaluation_data(self):
-        if not self.create_eval_data:
-            eprint("No eval Data available")
-        eval_len = self.eval_len
-        self.eval_len = 0
-        X, Y = self.__get_batches([self.__len__() -i-1 for i in range(eval_len)])
-        self.eval_len = eval_len
-        return X, Y
+        if self.shuffle:
+            self.__shuffle_data()
+
+        # Split data into train and validation
+        self.dl_train_data_idx = [[] for idx in self.dl_idx ]
+        self.dl_val_data_idx = [[] for idx in self.dl_idx ]
+        for idx in self.dl_idx:
+            size_ = len(self.dl_data_idx[idx])
+            split = int(size_ * (1 - self.val_split))
+            self.dl_train_data_idx[idx] = self.dl_data_idx[idx][:split]
+            self.dl_val_data_idx[idx] = self.dl_data_idx[idx][split:]
+
+        # set current mode to be train
+        self.set_validation_mode(False)
+
+
+
+    def __shuffle_data(self):
+        # Shuffle batch indices
+        for idx in self.dl_idx:
+            np.random.shuffle(self.dl_data_idx[idx])
+        # Shuffle dataloader indices
+        np.random.shuffle(self.dl_idx)
+
+    def set_validation_mode(self, val=True):
+        # Makes the current datagen as a validation datagenerator by removing
+        if val:
+            # Validation mode
+            for idx in self.dl_idx:
+                self.dl_data_idx[idx] = self.dl_val_data_idx[idx]
+        else:
+            # Training mode
+            for idx in self.dl_idx:
+                self.dl_data_idx[idx] = self.dl_train_data_idx[idx]
+
 
     def get_all_batches(self):
         a, b = self.__get_batches(range(self.__len__()))
@@ -327,7 +343,7 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
         for data_idx in self.dl_data_idx:
             num += len(data_idx)
         real_len = int(num / self.batch_size)
-        return real_len - self.eval_len
+        return real_len
 
     def __get_batches(self, batches=[]):
         X_ = np.empty([0])
@@ -337,6 +353,7 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
             X_ = X if X_.size == 0 else np.append(X_, X, axis=0)
             Y_ = Y if Y_.size == 0 else np.append(Y_, Y, axis=0)
         if X_.size == 0 or Y_.size == 0:
+            eprint("Batches are empty")
             return
         return X_, Y_
 
@@ -460,8 +477,6 @@ class takktile_datagenerator(tf.keras.utils.Sequence):
                         # Add random label data to dataloader
                         if self.oversampling:
                             self.dl_data_idx[rand_dl_idx].append(rand_dl_data_idx)
-                            if self.shuffle: # Shuffle dataloader data list
-                                np.random.shuffle(self.dl_data_idx[rand_dl_idx])
                             found = True
                         elif rand_dl_data_idx in self.dl_data_idx[rand_dl_idx]:
                             self.dl_data_idx[rand_dl_idx].remove(rand_dl_data_idx)
