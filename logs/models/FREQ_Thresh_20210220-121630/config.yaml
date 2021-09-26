@@ -1,0 +1,60 @@
+data:
+  augment: {input_noise: 0.0, mode: none, probability: 0.75}
+  batch_size: 256
+  data_format: freq_power
+  data_home: /home/abhinavg/data/takktile/data-v5
+  data_transform:
+    max: !!python/tuple
+    - [179.0, 130.0, 161.0, 81.0, 77.0, 98.0]
+    - [1.0, 1.0]
+    mean: !!python/tuple
+    - [-7.363304738902307, -65.6940284833847, -17.2667110852003, -15.887965353543766,
+      -73.38181061047722, -6.901207628883151]
+    - [0.0, 0.0]
+    min: !!python/tuple
+    - [-413.0, -439.0, -440.0, -467.0, -462.0, -423.0]
+    - [0.0, 0.0]
+    output_mean_zero: true
+    std: !!python/tuple
+    - [61.99909688587264, 167.78473820474576, 102.91020159880028, 93.63472746782125,
+      155.25622450235602, 74.61394235760639]
+    - [1.0, 1.0]
+    type: standard
+  eval_data: false
+  file_format: mat
+  histogram: {create: false, save: false, slip_filter: 1}
+  label_dimension: all
+  label_type: slip
+  materials: [plastic, horizontal, vertical, sphere]
+  num_dir_classes: 9
+  radial_slip: true
+  series_len: 100
+  shuffle: true
+  slip_filter: 1
+  slip_thresh: {angular_speed: 0.15, flow: 2.5, speed: 0.003}
+  speeds: [5cmps, 7cmps, 10cmps]
+  test_data_exclude: [foam]
+  test_dir: /val/
+  test_material: false
+  train_data_exclude: [foam, release, plastic, horizontal, vertical]
+  train_dir: /train/
+  use_pressure_delta: false
+net:
+  activation: selu
+  dilations: [1, 2, 4, 8]
+  kernel_size: 8
+  name: tcn_takktile
+  nb_filters: 12
+  nb_stacks: 1
+  output_layers: [24, 24]
+  padding: causal
+  return_sequences: false
+  save_last_model: true
+  slip_thresh: 11000.0
+  trained: false
+  type: freq_thresh
+  use_best_model: false
+  use_skip_connections: false
+training: {balance_data: true, class_weights: false, dropout_rate: 0.2, epochs: 0,
+  epochs_complete: 0, kernel_initializer: he_normal, lr: 0.002, opt: adam, regression: false,
+  use_batch_norm: false, use_layer_norm: true, verbosity: 1}

@@ -32,11 +32,10 @@ data:
   shuffle: true
   slip_filter: 1
   slip_thresh: {angular_speed: 0.2, flow: 2.5, speed: 0.003}
-  speeds: [5cmps, 7cmps, 10cmps]
   test_data_exclude: [foam]
   test_dir: /val/
-  test_material: true
-  train_data_exclude: [foam, release, translation, rotation]
+  test_material: false
+  train_data_exclude: [foam, release]
   train_dir: /train/
   truncate_pressure: 0
   use_pressure_delta: false
