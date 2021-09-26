@@ -23,12 +23,12 @@ plot(epochs, data_val_acc, 'black','LineWidth',1.5); hold on;
 
 yyaxis left;
 xlabel('Epochs');
-ylabel('Accuracy');
-ylim([0.8, 0.93]);
+ylabel('Validationn Accuracy');
+ylim([0.85, 0.95]);
 grid on;
 
 yyaxis right;
 plot(epochs, data_val_loss, 'r', 'LineWidth', 1.5); hold off;
-ylabel('Loss');
-ylim([0.15, 0.4]);
+ylabel('Validation Loss');
+ylim([0.12, 0.3]);
 
